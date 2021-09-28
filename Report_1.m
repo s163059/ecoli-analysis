@@ -10,6 +10,13 @@ X.Properties.VariableNames = att;
 X(:,'prot_name');
 % If we want to use more than one var use brakets
 
+
+%% Label encoding
+% Substract the column class from the matrix. The column we wish to predict
+classLabels = table2cell(X(:,9));
+% Fiter the uniques values
+classNames = unique(classLabels);
+% Create an encode vector of the different categories
 %{
 Transform the different categories to numbers 
   cp  (cytoplasm)                                      0
@@ -21,39 +28,54 @@ Transform the different categories to numbers
   imL (inner membrane lipoprotein)                     6
   imS (inner membrane, cleavable signal sequence)      7
 %}
-
-cat = categorical({'cp', 'im', 'pp', 'imU', 'om', 'omL', 'imL', 'imS'});
-
-% Substract the class labels from the matrix
-classLabels = table2cell(X(:,9));
-% Fiter the uniques values
-classNames = unique(classLabels);
-% Extract class labels that match the class names
 [~,y] = ismember(classLabels, classNames);
-% Using '~' ignores an output. Try writing 'help ismember'. Here, we use
-% the output that the doc calls LOCB to determine to which class name each
-% class label in classLabels corresponds. Since classLabels(75) is an
-% 'Iris-versicolor', we could call:
-%[~, b] = ismember(classLabels(75), classNames)
-% to see that classLabels(1) corresponds to b=2, and therefore the second
-% class name in classNames.
-% Since we want to assign numerical values to the classes starting from a
-% zero and not a one, we subtract one to the get final y:
+% Substract 1 to the vector so it's starts from 0.
 y = y-1;
-length(y);
+y_len = length(y);
 % Lastly, we determine the number of attributes M, the number of
 % observations N and the number of classes C:
 [M, N] = size(X);
 C = length(classNames);
 
-% Create a matrix 
+% Create a matrix with the variables that are really useful. So we can
+% create an easy further visual analysis.
 ecoli_temp = table2array(X(:, {'mgc', 'gvh', 'lip', 'chg', 'aac', 'alm1', 'alm2'}));
+% Append the y encoded vector to the matrix. It's not really essential
 ecoli = [ecoli_temp, y];
+size(ecoli)
+% Create a categoriacal vector with the attributes from the data. So we can
+% use them as labels later (not sure if it's necessesary)
+cat = categorical({'cp', 'im', 'pp', 'imU', 'om', 'omL', 'imL', 'imS'});
+
+% Check if we can get some information with histograms.
+figure()
+subplot(3,2,1)
+histogram(ecoli(:,1), 600);
+
+subplot(3,2,2)
+histogram(ecoli(:,1), 600);
+
+subplot(3,2,3)
+histogram(ecoli(:,1), 600);
+
+subplot(3,2,4)
+histogram(ecoli(:,1), 600);
+
+subplot(3,2,5)
+histogram(ecoli(:,1), 600);
+
+subplot(3,2,6)
+histogram(ecoli(:,1), 600);
 
 
 
+figure()
+heatmap(ecoli)
 
-% histogram(y, 'labels', classNames);
+F = ecoli'*ecoli/mean(ecoli);
+G = corr(ecoli);
+F == G
+
 
 
 
