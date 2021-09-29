@@ -64,12 +64,8 @@ size(ecoli)
 cat = categorical({'cp', 'im', 'pp', 'imU', 'om', 'omL', 'imL', 'imS'});
 
 %% Count number of instances 
-count = accumarray(ic,1);
-class count(1)
-f = cell2mat(classNames)
-count_cat = [classNames, count];
-class count
 
+[C, ia, ic} = unique(class
 
 %% Color map 
 red = [1 0 0];
