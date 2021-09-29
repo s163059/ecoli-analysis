@@ -65,12 +65,9 @@ cat = categorical({'cp', 'im', 'pp', 'imU', 'om', 'omL', 'imL', 'imS'});
 
 %% Count number of instances 
 count = accumarray(ic,1);
-class count(1)
-f = cell2mat(classNames)
-count_cat = [classNames, count];
-class count
+values = [unique(y), count];
 
-
+% We could also work with tables, I am not really used to that
 %% Color map 
 red = [1 0 0];
 blue = [0 0 1];
@@ -82,8 +79,6 @@ orange = [255, 165, 0]/255;
 pink = [255,105,180]/255;
 
 c_map = [red;blue;green;yellow;magenta;brown;orange;pink];
-
-
 
 %% Visualize Continuous Data 
 %{
@@ -145,14 +140,14 @@ Finally, Acc seem to follow a uniform distribution.
 We can try to crate a histogram plot painting each category 
 %}
 
-
-
 %% Visualize binary data
 % For the binari classes we can make a first analysis by ploting the
 % different outcomes
 
 % Create a vector from one to 336, simulating the index positions. 
 index = 1:length(ecoli(:,3));
+% set legend 
+b = ['cp :143'; 'im : 77'; 'imL: 2 '; 'imS: 2 '; 'imU: 35'; 'om : 20'; 'omL: 5 '; 'pp : 52'];
 
 % Lip Attribute
 figure()
@@ -161,6 +156,7 @@ gscatter(index, ecoli(:,3), classLabels, c_map)
 xlabel('Data points')
 ylabel('lip Attribute')
 ylim([0.40,1.1])
+legend(b)
 
 % Chg Attribute
 subplot(1,2,2)
@@ -168,27 +164,21 @@ gscatter(index, ecoli(:,4), classLabels, c_map)
 xlabel('Data points')
 ylabel('chg Attribute')
 ylim([0.40,1.1])
+legend(b)
 
 %{
+It would be nice to explain which data point are outside and if we could
+consider them as ouliers or if it has something to do with the
+categorization. 
+Lip 
+Cgh Only one data point with value one from two samples 
 
-Cgh
 %}
-%%
 
 
+%% BOX plots
 
-
-%%
-
-
-
-
-lib_values = unique(ecoli(:,3));
-
-
-%%
-
-% Box plot to analyse the importance of the first variable
+% Box plot to analyse the importance of the mcg variable
 figure()
 boxplot(ecoli(:,1), y, 'labels', classNames)
 xlabel('Categories')
@@ -198,27 +188,45 @@ title('Quantity of mgc in each category')
 % categories, one that's above 0.5 and and another that's below 0.5.
 
 % We could also say that will have to focus on both goups to see how we
-% should separate them
+% should separate them.
+% It will be nice to see with the different cateories the boxplots. Also to
+% color them with the different color categories. If we are consistent with
+% the colors it will be easier to understand later the data
 
 
-%We can plot something like in page 122 of the book
+%% We can plot something like in page 122 of the book
 
-
-
-%% Feature Normalization
-
+% Covariance matrix 
 [E_norm, mu, sigma] = featureNormalize(ecoli);
 
-function [X_norm, mu, sigma] = featureNormalize(X)
-    % FEATURENORMALIZE, Normalizes the data mean 0 and std 1.
-    
-    mu = mean(X);
-    sigma = std(X);
-    X_norm = bxsfun(@minus, X, mu);
-    X_norm = bxsfun(@rdivide, X_norm, mu);
+% Covariance matrix
+ecoli_temp = ecoli-mu;
+cov_ecoli = ecoli'*ecoli/(length(ecoli(:,1))-1);
 
 
+% correlation matrix 
+E_correlation = E_norm'*E_norm/(length(E_norm(:,1))-1);
+figure()
+heatmap(E_correlation)
+% Same result, only to check
+E_corr = corr(E_norm);
+% heatmap of covariance 
+% only to check 
 
-end
+% put legend on the heatmap, columns and rows to understand more data
+% of those variables that have more correlation, plot one variable against
+% the other and categorize the data. 
+
+% Vars 3 and 4 have little correlation with the others because they are
+% binary attributes (or vars), it doesn't have much sense to put them in
+% the corr matrix
+% example:
+figure()
+gscatter(E_norm(:,1), E_norm(:,2), classLabels, c_map)
+xlabel('Data points')
+ylabel('chg Attribute')
+legend(b)
+
+
 
 
