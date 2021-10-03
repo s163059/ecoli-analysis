@@ -303,8 +303,35 @@ ylabel('Variance explained value');
 title('Variance explained by principal components');
 
 %% Plot PCA of data 1 Pca axis vs Pca axis 2D
+
+
+
+[~,y] = ismember(classLabels, classNames);
+uniqueCat = unique(y);
+%
+% RGB values of your favorite colors: 
 figure()
-subplot(2,2,1:2)
+subplot(2,2,1)
+% Initialize some axes
+view(3)
+grid on
+hold on
+% Plot each group individually: 
+
+for k = 1:length(uniqueCat)
+      % Get indices of this particular unique group:
+      ind = y == uniqueCat(k);
+      % Plot only this group: 
+      plot3(Z(ind,1),Z(ind,2),Z(ind,3),'.','color',c_map(k,:),'markersize',12); 
+end
+xlabel('PCA 1')
+ylabel('PCA 2')
+zlabel('PCA 3')
+title('3 PCA plot')
+legend(b)
+hold off
+
+subplot(2,2,2)
 gscatter(Z(:,1), Z(:,2), classLabels, c_map)
 xlabel('PCA 1')
 ylabel('PCA 2')
@@ -319,7 +346,6 @@ sgtitle('PCA of data')
 
 
 subplot(2,2,4)
-figure()
 gscatter(Z(:,2), Z(:,3), classLabels, c_map)
 xlabel('PCA 2')
 ylabel('PCA 3')
