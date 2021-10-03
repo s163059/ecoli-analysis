@@ -55,9 +55,10 @@ C = length(classNames);
 
 % Create a matrix with the variables that are really useful. So we can
 % create an easy further visual analysis.
-ecoli_temp = table2array(X(:, {'mgc', 'gvh', 'lip', 'chg', 'aac', 'alm1', 'alm2'}));
+ecoli_att = table2array(X(:, {'mgc', 'gvh', 'lip', 'chg', 'aac', 'alm1', 'alm2'}));
+
 % Append the y encoded vector to the matrix. It's not really essential
-ecoli = [ecoli_temp, y];
+ecoli = [ecoli_att, y];
 size(ecoli)
 % Create a categoriacal vector with the attributes from the data. So we can
 % use them as labels later (not sure if it's necessesary)
@@ -196,22 +197,25 @@ title('Quantity of mgc in each category')
 
 %% We can plot something like in page 122 of the book
 
-% Covariance matrix 
-[E_norm, mu, sigma] = featureNormalize(ecoli);
-
-% Covariance matrix
-ecoli_temp = ecoli-mu;
-cov_ecoli = ecoli'*ecoli/(length(ecoli(:,1))-1);
 
 
-% correlation matrix 
-E_correlation = E_norm'*E_norm/(length(E_norm(:,1))-1);
+%% Basic summary  Covariance matrix 
+
+Y = basicStats(ecoli_att);
+
+
+
+%% Correlation matrix
+
+
+ecoli_norm = featureNormalization(ecoli_att);
+corr_ecoli = corr(ecoli_norm);
 figure()
-heatmap(E_correlation)
-% Same result, only to check
-E_corr = corr(E_norm);
-% heatmap of covariance 
-% only to check 
+h = heatmap(corr_ecoli); 
+h.XDisplayLabels= {'mgc', 'gvh', 'lip', 'chg', 'aac', 'alm1', 'alm2'};
+h.YDisplayLabels = {'mgc', 'gvh', 'lip', 'chg', 'aac', 'alm1', 'alm2'};
+
+
 
 % put legend on the heatmap, columns and rows to understand more data
 % of those variables that have more correlation, plot one variable against
@@ -221,12 +225,188 @@ E_corr = corr(E_norm);
 % binary attributes (or vars), it doesn't have much sense to put them in
 % the corr matrix
 % example:
+
+%% More Plots
+att1 = att(1,2:end);
+
 figure()
-gscatter(E_norm(:,1), E_norm(:,2), classLabels, c_map)
-xlabel('Data points')
-ylabel('chg Attribute')
+[~,ax]=plotmatrix(ecoli_att); 
+set(findall(gcf,'-property','FontSize'),'FontSize',12)
+ax(1,1).YLabel.String='mgc'; 
+ax(2,1).YLabel.String='gvh'; 
+ax(3,1).YLabel.String='lip'; 
+ax(4,1).YLabel.String='chg'; 
+ax(5,1).YLabel.String='aac'; 
+ax(6,1).YLabel.String='alm1'; 
+ax(7,1).YLabel.String='alm2'; 
+
+ax(7,1).XLabel.String='mgc'; 
+ax(7,2).XLabel.String='gvh'; 
+ax(7,3).XLabel.String='lip';
+ax(7,4).XLabel.String='chg'; 
+ax(7,5).XLabel.String='aac'; 
+ax(7,6).XLabel.String='alm1';
+ax(7,7).XLabel.String='alm2'; 
+
+%% PCA 
+% Compute PCA with singular value decomposition, specify the economy-size
+% funtion to fast computation
+
+% Substract the mean from the data
+N_ecoli = ecoli_att - mean(ecoli_att);
+
+[U, S, V] = svd(N_ecoli, 'econ');
+% S--> Variance
+% V--> Eigenvalues
+% U--> Rotation matrix
+
+% Project the data into the pricipal compoenents 
+Z = U*S;
+
+% eigenvalues 
+E_values = diag(S).^2;
+
+% Variance explianed by the principal components 
+rho = diag(S).^2./sum(diag(S).^2);
+cum_rho = cumsum(rho);
+
+% Select PCA
+k = 7;
+
+%% Scree and Variance Explained
+
+% Specify the treshold 
+threshold = 0.90;
+
+% Plot variance explained for all PCA
+figure()
+subplot(1,2,1)
+plot(E_values, 'o-')
+grid minor
+xlabel('Principal component');
+ylabel('Eigenvalue');
+title('Scree Plot');
+legend('Eigenvalues')
+
+subplot(1,2,2)
+hold on
+plot(rho, 'x-'); % We plot the varience 
+plot(cumsum(rho), 'o-');
+plot([0,length(rho)], [threshold, threshold], 'k--');
+legend({'Individual','Cumulative','Threshold'}, ...
+        'Location','best');
+ylim([0, 1]);
+xlim([1, length(rho)]);
+grid minor
+xlabel('Principal component');
+ylabel('Variance explained value');
+title('Variance explained by principal components');
+
+%% Plot PCA of data 1 Pca axis vs Pca axis 2D
+figure()
+subplot(2,2,1:2)
+gscatter(Z(:,1), Z(:,2), classLabels, c_map)
+xlabel('PCA 1')
+ylabel('PCA 2')
+sgtitle('PCA of data') 
+
+
+subplot(2,2,3)
+gscatter(Z(:,1), Z(:,3), classLabels, c_map)
+xlabel('PCA 1')
+ylabel('PCA 3')
+sgtitle('PCA of data') 
+
+
+subplot(2,2,4)
+figure()
+gscatter(Z(:,2), Z(:,3), classLabels, c_map)
+xlabel('PCA 2')
+ylabel('PCA 3')
+sgtitle('PCA of data') 
 legend(b)
 
+%%  Plot the data and the scores of the attributes on the PCA
+
+c = {'mgc', 'gvh', 'lip', 'chg', 'aac', 'alm1', 'alm2'};
+
+% circle radius 1
+r = 1;
+x = 0;
+y = 0;
+th = 0:pi/50:2*pi;
+xunit = r * cos(th) + x;
+yunit = r * sin(th) + y;
 
 
+figure()
+subplot(2,2,2)
+axis square
+grid on
+biplot(V(:,1:2),'scores',Z(:,1:2),'VarLabels',c);
+hold on 
+plot(xunit, yunit);
+pbaspect([1 1 1]);
+title('Attribute scores in PCA 1 & PCA 2');
+xlabel('Component 1');
+ylabel('Component 2');
+hold off
 
+subplot(2,2,3)
+axis square
+grid on
+biplot(V(:,2:3),'scores',Z(:,2:3),'VarLabels',c);
+hold on 
+plot(xunit, yunit);
+pbaspect([1 1 1]);
+title('Attribute scores in PCA 2 & PCA 3');
+xlabel('Component 2');
+ylabel('Component 3');
+hold off
+
+subplot(2,2,4)
+axis square
+grid on
+biplot(V(:,[1,3]),'scores',Z(:,[1,3]),'VarLabels',c);
+hold on 
+plot(xunit, yunit);
+pbaspect([1 1 1]);
+title('Attribute scores in PCA 1 & PCA 3');
+xlabel('Component 1');
+ylabel('Component 3');
+hold off
+
+subplot(2,2,1)
+axis square
+grid on
+biplot(V(:,1:3),'scores',Z(:,1:3),'VarLabels',c);
+pbaspect([1 1 1]);
+title('Attribute scores in PCA 1 & PCA 2 & PCA 3');
+sgtitle('Compoenent Pattern plots');
+hold off
+
+
+%% Create a 3D Plot with the first 3 PCA
+[~,y] = ismember(classLabels, classNames);
+uniqueCat = unique(y);
+%
+% RGB values of your favorite colors: 
+figure()
+% Initialize some axes
+view(3)
+grid on
+hold on
+% Plot each group individually: 
+
+for k = 1:length(uniqueCat)
+      % Get indices of this particular unique group:
+      ind = y == uniqueCat(k)
+      % Plot only this group: 
+      plot3(Z(ind,1),Z(ind,2),Z(ind,3),'.','color',c_map(k,:),'markersize',20); 
+end
+xlabel('PCA 1')
+ylabel('PCA 2')
+zlabel('PCA 3')
+title('3 PCA plot')
+legend(b)
+hold off
